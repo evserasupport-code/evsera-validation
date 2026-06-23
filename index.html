@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>EVSERA — Atmosphere, intentionally designed.</title>
+<meta name="description" content="EVSERA is an atmosphere design company. One intentional atmosphere that follows you — home, car, office. Reserve your founding spot." />
+
+<!-- ============================================================= -->
+<!-- CONFIG — change these values, deploy to evserahome.com, done.  -->
+<!-- ============================================================= -->
+<script>
+  window.EVSERA_CONFIG = {
+    // 1. Paystack PUBLIC key (test = pk_test_, live = pk_live_).
+    //    Get it free at https://dashboard.paystack.com/#/settings/developer
+    //    Leave "" to run the deposit button in DEMO mode (no real charge).
+    PAYSTACK_PUBLIC_KEY: "pk_live_79a3e4dfc70c2ed2a18cb10dac7a8027a7fde31e",
+    // 2. Where survey + lead data is POSTed (e.g. a free Formspree endpoint).
+    //    Leave "" to log submissions to the browser console instead.
+    FORM_ENDPOINT: "https://formspree.io/f/xkolgvnq",
+    // 3. The refundable deposit amount, in Naira.
+    DEPOSIT_NAIRA: 2000,
+    // 4. Your WhatsApp COMMUNITY invite link (chat.whatsapp.com/...).
+    //    Free: WhatsApp > Communities > New community. Leave "" to show a placeholder.
+    WHATSAPP_COMMUNITY_LINK: "https://whatsapp.com/channel/0029VbD9C462P59qhQKNPs3d",
+    // 5. Your WhatsApp number for business enquiries — intl format, no "+" (e.g. 2348012345678).
+    WHATSAPP_NUMBER: "2348138991052"
+  };
+</script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --forest: #013220;
+    --sage: #366658;
+    --leaf: #8CB64A;
+    --leaf-deep: #6E9233;
+    --grey: #979FA7;
+    --paper: #F7F8F4;   /* warm off-white */
+    --paper-2: #EEF1E9;
+    --ink: #16241D;
+    --line: #DCE2D6;
+    --maxw: 1080px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, system-ui, sans-serif;
+    font-weight: 300;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .serif { font-family: "Cormorant Garamond", Georgia, serif; }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+  h1, h2, h3 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; }
+  .eyebrow { font-family: "Inter", sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.28em;
+    text-transform: uppercase; color: var(--leaf-deep); }
+  .muted { color: var(--sage); }
+
+  /* nav */
+  nav { position: sticky; top: 0; z-index: 50; background: rgba(247,248,244,0.85);
+    backdrop-filter: blur(12px); border-bottom: 1px solid var(--line); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .brand { font-family: "Inter"; font-weight: 600; letter-spacing: 0.34em; font-size: 17px; color: var(--forest); }
+  .nav-cta { font-size: 13px; font-weight: 500; letter-spacing: 0.04em; color: var(--forest);
+    text-decoration: none; border: 1px solid var(--forest); padding: 9px 18px; border-radius: 2px; transition: all .2s; }
+  .nav-cta:hover { background: var(--forest); color: var(--paper); }
+
+  /* hero */
+  header { padding: 90px 0 70px; text-align: center; }
+  header .eyebrow { display: inline-block; margin-bottom: 26px; }
+  header h1 { font-size: clamp(44px, 9vw, 88px); font-weight: 500; color: var(--forest); }
+  header h1 em { font-style: italic; color: var(--sage); }
+  header .lede { max-width: 560px; margin: 26px auto 0; font-size: clamp(16px, 4vw, 19px);
+    color: var(--sage); font-weight: 300; }
+  .cta-row { margin-top: 40px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn { font-family: "Inter"; font-size: 15px; font-weight: 500; letter-spacing: 0.02em; cursor: pointer;
+    padding: 15px 30px; border-radius: 2px; text-decoration: none; display: inline-flex; align-items: center;
+    gap: 8px; border: 1px solid var(--forest); transition: all .2s; }
+  .btn-solid { background: var(--forest); color: var(--paper); }
+  .btn-solid:hover { background: #02472d; }
+  .btn-ghost { background: transparent; color: var(--forest); }
+  .btn-ghost:hover { background: var(--paper-2); }
+  .hero-meta { margin-top: 22px; font-size: 13px; color: var(--grey); letter-spacing: 0.02em; }
+
+  /* belief — dark full-bleed */
+  .belief { background: var(--forest); color: var(--paper); padding: 96px 0; text-align: center; margin: 40px 0; }
+  .belief .leaf { width: 30px; height: 30px; margin: 0 auto 28px; display: block; }
+  .belief p { font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(26px, 5vw, 40px);
+    font-weight: 400; font-style: italic; line-height: 1.28; max-width: 880px; margin: 0 auto; }
+  .belief p b { color: var(--leaf); font-style: normal; font-weight: 600; }
+
+  /* generic section */
+  section { padding: 70px 0; }
+  .section-head { text-align: center; max-width: 640px; margin: 0 auto 50px; }
+  .section-head h2 { font-size: clamp(30px, 6vw, 46px); color: var(--forest); margin-top: 12px; }
+  .section-head p { margin-top: 16px; color: var(--sage); font-size: 16px; }
+
+  /* reframe two-col */
+  .reframe { display: grid; gap: 30px; grid-template-columns: 1fr; align-items: center; }
+  .reframe .big { font-family: "Cormorant Garamond", serif; font-size: clamp(28px, 5vw, 42px);
+    color: var(--forest); line-height: 1.15; }
+  .reframe .big em { font-style: italic; color: var(--sage); }
+  .reframe .body p { color: var(--ink); margin-bottom: 16px; font-size: 16px; }
+  .reframe .body p strong { font-weight: 600; color: var(--forest); }
+  @media (min-width: 820px) { .reframe { grid-template-columns: 1.1fr 1fr; gap: 60px; } }
+
+  /* continuity wedge */
+  .wedge { background: var(--paper-2); }
+  .flow { display: grid; grid-template-columns: 1fr; gap: 16px; max-width: 760px; margin: 0 auto; }
+  .flow .node { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 26px;
+    text-align: center; }
+  .flow .node .ic { font-size: 30px; }
+  .flow .node h3 { font-size: 24px; color: var(--forest); margin: 8px 0 4px; }
+  .flow .node p { font-size: 14px; color: var(--sage); }
+  .flow .arrow { display: none; }
+  @media (min-width: 760px) {
+    .flow { grid-template-columns: 1fr auto 1fr auto 1fr; align-items: center; }
+    .flow .arrow { display: block; color: var(--leaf-deep); font-size: 22px; text-align: center; }
+  }
+  .wedge-note { text-align: center; margin-top: 34px; font-family: "Cormorant Garamond", serif;
+    font-style: italic; font-size: clamp(20px, 4vw, 28px); color: var(--forest); }
+
+  /* system cards */
+  .cards { display: grid; gap: 20px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 4px; padding: 30px 26px; }
+  .card .ic { font-size: 26px; }
+  .card .time { font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--leaf-deep);
+    font-weight: 600; margin-top: 14px; }
+  .card h3 { font-size: 27px; color: var(--forest); margin: 4px 0 2px; }
+  .card .place { font-style: italic; color: var(--grey); font-family: "Cormorant Garamond", serif; font-size: 17px; }
+  .card .profile { margin-top: 14px; font-size: 13.5px; color: var(--sage); font-weight: 500; }
+  .card .benefit { margin-top: 8px; font-size: 14px; color: var(--ink); }
+
+  /* reserve / deposit */
+  .reserve { background: var(--forest); color: var(--paper); }
+  .reserve .section-head h2 { color: var(--paper); }
+  .reserve .section-head p { color: #BFD3C0; }
+  .offer { max-width: 560px; margin: 0 auto; text-align: center; }
+  .price { font-family: "Cormorant Garamond", serif; font-size: 64px; color: var(--leaf); line-height: 1; }
+  .price small { font-family: "Inter"; font-size: 15px; color: #BFD3C0; font-weight: 300; }
+  .offer ul { list-style: none; text-align: left; max-width: 400px; margin: 28px auto; display: grid; gap: 12px; }
+  .offer li { font-size: 15px; padding-left: 28px; position: relative; color: var(--paper); }
+  .offer li::before { content: "—"; position: absolute; left: 0; color: var(--leaf); }
+  .reserve .btn-solid { background: var(--leaf); color: var(--forest); border-color: var(--leaf); width: 100%;
+    justify-content: center; font-weight: 600; }
+  .reserve .btn-solid:hover { background: #9ac457; }
+  .guarantee { font-size: 13px; color: #BFD3C0; margin-top: 14px; }
+  .demo-flag { display: none; background: rgba(140,182,74,0.15); color: var(--leaf); border: 1px solid var(--leaf);
+    font-size: 12.5px; text-align: center; padding: 9px; border-radius: 3px; margin: 16px 0; }
+  .demo-flag.show { display: block; }
+
+  /* survey */
+  .survey { max-width: 640px; margin: 0 auto; background: var(--paper); border: 1px solid var(--line);
+    border-radius: 6px; padding: 34px 30px; }
+  .q { margin-bottom: 24px; }
+  .q label.qlabel { display: block; font-weight: 500; font-size: 15.5px; margin-bottom: 11px; color: var(--forest); }
+  .q .hint { font-size: 12.5px; color: var(--grey); font-weight: 300; }
+  .opts { display: grid; gap: 9px; }
+  .opts.cols { grid-template-columns: 1fr 1fr; }
+  .opt { display: flex; align-items: center; gap: 10px; cursor: pointer; background: var(--paper);
+    border: 1px solid var(--line); border-radius: 3px; padding: 12px 13px; font-size: 14px; transition: all .15s; }
+  .opt:hover { border-color: var(--leaf-deep); }
+  .opt.sel { border-color: var(--leaf-deep); background: var(--paper-2); }
+  .opt input { accent-color: var(--leaf-deep); width: 16px; height: 16px; flex-shrink: 0; }
+  input[type=email], input[type=text] { width: 100%; background: var(--paper); border: 1px solid var(--line);
+    border-radius: 3px; padding: 13px; color: var(--ink); font-size: 15px; font-family: "Inter"; }
+  input::placeholder { color: var(--grey); }
+  .survey .btn-solid { width: 100%; justify-content: center; margin-top: 4px; }
+  .form-note { font-size: 12.5px; color: var(--grey); margin-top: 14px; text-align: center; }
+  .thanks { display: none; text-align: center; padding: 40px 10px; }
+  .thanks.show { display: block; }
+  .thanks .big { font-size: 44px; }
+  .thanks h3 { font-size: 30px; color: var(--forest); margin: 12px 0; }
+  .thanks p { color: var(--sage); }
+
+  footer { border-top: 1px solid var(--line); padding: 40px 0 56px; text-align: center; color: var(--grey); font-size: 13px; }
+  footer .brand-f { font-family: "Inter"; font-weight: 600; letter-spacing: 0.3em; color: var(--forest); font-size: 15px; }
+  footer .tag { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 18px; color: var(--sage); margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">EVSERA</div>
+    <div style="display:flex; gap:14px; align-items:center;">
+      <a href="#business" style="font-size:13px; color:var(--sage); text-decoration:none; letter-spacing:0.04em;">For business</a>
+      <a href="#reserve" class="nav-cta">Reserve your place</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <span class="eyebrow">An atmosphere design company · Lagos</span>
+    <h1 class="serif">Atmosphere,<br><em>intentionally designed.</em></h1>
+    <p class="lede">One intentional atmosphere that follows you through your day — home, car, and office. We begin with scent.</p>
+    <div class="cta-row">
+      <a href="#profile" class="btn btn-solid">Discover your atmosphere profile</a>
+      <a href="#system" class="btn btn-ghost">See how it works</a>
+    </div>
+    <p class="hero-meta">Founding members · first 100 · fully refundable deposit</p>
+  </div>
+</header>
+
+<!-- BELIEF -->
+<div class="belief">
+  <div class="wrap">
+    <svg class="leaf" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M5 21c0-9 6-15 14-16 0 9-5 15-14 16Z" stroke="#8CB64A" stroke-width="1.4"/>
+      <path d="M6 20C9 15 13 11 17 9" stroke="#8CB64A" stroke-width="1.4" stroke-linecap="round"/>
+    </svg>
+    <p>EVSERA believes the way your space smells shapes <b>how you feel</b>, <b>how you reset</b>, and <b>how you're remembered</b>.</p>
+  </div>
+</div>
+
+<!-- REFRAME -->
+<section>
+  <div class="wrap reframe">
+    <div class="big serif">We're not an air freshener.<br>We're designing <em>how your world feels.</em></div>
+    <div class="body">
+      <p><strong>Scent is simply our first medium.</strong> EVSERA exists to intentionally design the environments you live and work in — the atmosphere that quietly shapes your mood, your focus, and your rest.</p>
+      <p>Most brands sell a candle, a diffuser, a bottle. We're building something different: a single, intentional atmosphere identity that moves with you through your whole day — and grows, over time, beyond scent.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WEDGE -->
+<section class="wedge">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">The gap no one owns</span>
+      <h2 class="serif">One atmosphere, all day.</h2>
+      <p>You have a good scent at home, maybe. But your car smells like a cardboard tree, and your desk smells like nothing. No one designs the whole day. We do.</p>
+    </div>
+    <div class="flow">
+      <div class="node"><div class="ic">🏠</div><h3 class="serif">Home</h3><p>Calm, restorative.</p></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ic">🚗</div><h3 class="serif">Car</h3><p>Awake, composed.</p></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ic">💼</div><h3 class="serif">Office</h3><p>Focused, clear.</p></div>
+    </div>
+    <p class="wedge-note">One signature that follows you — and tells everyone the space is yours.</p>
+  </div>
+</section>
+
+<!-- SYSTEM -->
+<section id="system">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">The Day-to-Night system</span>
+      <h2 class="serif">Three moments. One signature.</h2>
+      <p>It begins with your atmosphere profile. A short quiz reads your day, then tunes a plant-based blend to each part of it — held together by one signature thread.</p>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <div class="ic">☀️</div>
+        <div class="time">Morning · Car</div>
+        <h3 class="serif">Daybreak</h3>
+        <div class="place">awake & clear</div>
+        <div class="profile">Citrus · rosemary · peppermint</div>
+        <div class="benefit">Alertness for the commute — without the caffeine jitter.</div>
+      </div>
+      <div class="card">
+        <div class="ic">🖥️</div>
+        <div class="time">Midday · Office</div>
+        <h3 class="serif">Meridian</h3>
+        <div class="place">focused & calm</div>
+        <div class="profile">Bergamot · frankincense · cedar</div>
+        <div class="benefit">Beats the 2pm crash; quiet enough for a shared room.</div>
+      </div>
+      <div class="card">
+        <div class="ic">🌙</div>
+        <div class="time">Evening · Home</div>
+        <h3 class="serif">Nightfall</h3>
+        <div class="place">unwound & warm</div>
+        <div class="profile">Lavender · vetiver · warm vanilla</div>
+        <div class="benefit">Signals the nervous system the day is finally over.</div>
+      </div>
+    </div>
+    <p style="text-align:center; margin-top:30px; font-size:13.5px; color:var(--grey);">Plant-derived · low-toxin · designed to support focus and calm — never a medical claim.</p>
+  </div>
+</section>
+
+<!-- RESERVE / DEPOSIT -->
+<section class="reserve" id="reserve">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" style="color:var(--leaf)">Founding members</span>
+      <h2 class="serif">Reserve your place in the first release.</h2>
+      <p>We're building this with a small founding circle before public launch.</p>
+    </div>
+    <div class="offer">
+      <div class="price">₦<span id="depAmt">2,000</span> <small>fully refundable</small></div>
+      <ul>
+        <li>100% refundable — one tap, any time, no questions</li>
+        <li>Applied in full to your first order</li>
+        <li>Founding price locked: 30% below public launch</li>
+        <li>You shape the first atmospheres — founders vote</li>
+      </ul>
+      <button class="btn btn-solid" id="depositBtn">Reserve my place →</button>
+      <div class="demo-flag" id="demoFlag">⚠ Demo mode — no real charge. Add your Paystack key in CONFIG to go live.</div>
+      <p class="guarantee">We only charge to confirm intent. If we don't ship, you're refunded automatically.</p>
+    </div>
+  </div>
+</section>
+
+<!-- B2B -->
+<section class="wedge" id="business">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">For your business</span>
+      <h2 class="serif">Scent your space.</h2>
+      <p>Salons, spas, gyms, short-lets, offices — give customers a space they remember. We'll scent it free for one month. If they notice, we set up a small monthly refill.</p>
+    </div>
+    <form class="survey" id="b2bform" style="max-width:560px;">
+      <div class="q">
+        <label class="qlabel">Business name</label>
+        <input type="text" id="bname" placeholder="e.g. Serene Spa" required />
+      </div>
+      <div class="q">
+        <label class="qlabel">Type of business</label>
+        <div class="opts cols" data-single="btype">
+          <label class="opt"><input type="radio" name="btype" value="Short-let"/> Short-let / Airbnb</label>
+          <label class="opt"><input type="radio" name="btype" value="Salon/Spa"/> Salon / Spa</label>
+          <label class="opt"><input type="radio" name="btype" value="Gym/Studio"/> Gym / Studio</label>
+          <label class="opt"><input type="radio" name="btype" value="Office/Other"/> Office / Other</label>
+        </div>
+      </div>
+      <div class="q">
+        <label class="qlabel">Your name & WhatsApp</label>
+        <input type="text" id="bcontact" placeholder="Name · 0801 234 5678" required />
+      </div>
+      <button type="submit" class="btn btn-solid">Request my free month →</button>
+      <p class="form-note">No cost, no commitment. We'll reach out to schedule.</p>
+    </form>
+    <div class="thanks" id="b2bthanks">
+      <div class="big">🌿</div>
+      <h3 class="serif">Request received.</h3>
+      <p>We'll WhatsApp you to set up your free month. Talk soon.</p>
+    </div>
+  </div>
+</section>
+
+<!-- PROFILE / SURVEY -->
+<section id="profile">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Discover your atmosphere profile</span>
+      <h2 class="serif">90 seconds. Shape what we build.</h2>
+      <p>Tell us how you live and what you'd pay for. Even if you're not ready to reserve, this is the most useful thing you can give us.</p>
+    </div>
+
+    <form class="survey" id="survey">
+      <div class="q">
+        <label class="qlabel">1. Where does your day actually happen? <span class="hint">(pick all that apply)</span></label>
+        <div class="opts cols" data-multi="spaces">
+          <label class="opt"><input type="checkbox" value="Home"/> Home</label>
+          <label class="opt"><input type="checkbox" value="Car"/> Car</label>
+          <label class="opt"><input type="checkbox" value="Office"/> Office / shop</label>
+          <label class="opt"><input type="checkbox" value="Remote"/> Remote / work from home</label>
+        </div>
+      </div>
+      <div class="q">
+        <label class="qlabel">2. What do you most want your space to give you?</label>
+        <div class="opts" data-single="want">
+          <label class="opt"><input type="radio" name="want" value="calm"/> Calm — to decompress</label>
+          <label class="opt"><input type="radio" name="want" value="focus"/> Focus — to think clearly</label>
+          <label class="opt"><input type="radio" name="want" value="impression"/> Presence — to feel elevated & remembered</label>
+          <label class="opt"><input type="radio" name="want" value="routine"/> Better routines — mornings & evenings</label>
+        </div>
+      </div>
+      <div class="q">
+        <label class="qlabel">3. What frustrates you most about scent products you've tried?</label>
+        <div class="opts" data-single="pain">
+          <label class="opt"><input type="radio" name="pain" value="fades"/> Fades too fast</label>
+          <label class="opt"><input type="radio" name="pain" value="headache"/> Too strong / gives headaches</label>
+          <label class="opt"><input type="radio" name="pain" value="cheap"/> Smells cheap or synthetic</label>
+          <label class="opt"><input type="radio" name="pain" value="heat"/> Melts / fails in the heat</label>
+          <label class="opt"><input type="radio" name="pain" value="none"/> I haven't found one I love yet</label>
+        </div>
+      </div>
+      <div class="q">
+        <label class="qlabel">4. Today, how much do you spend on scent / atmosphere per month?</label>
+        <div class="opts" data-single="current_spend">
+          <label class="opt"><input type="radio" name="cs" value="<2k"/> Under ₦2,000</label>
+          <label class="opt"><input type="radio" name="cs" value="2-5k"/> ₦2,000 – ₦5,000</label>
+          <label class="opt"><input type="radio" name="cs" value="5-15k"/> ₦5,000 – ₦15,000</label>
+          <label class="opt"><input type="radio" name="cs" value=">15k"/> Over ₦15,000</label>
+        </div>
+      </div>
+      <div class="q">
+        <label class="qlabel">5. For an intentional, plant-based atmosphere system + monthly refill, what feels fair?</label>
+        <div class="opts" data-single="wtp">
+          <label class="opt"><input type="radio" name="wtp" value="<5k"/> Up to ₦5,000</label>
+          <label class="opt"><input type="radio" name="wtp" value="5-10k"/> ₦5,000 – ₦10,000</label>
+          <label class="opt"><input type="radio" name="wtp" value="10-20k"/> ₦10,000 – ₦20,000</label>
+          <label class="opt"><input type="radio" name="wtp" value=">20k"/> ₦20,000+</label>
+        </div>
+      </div>
+      <div class="q">
+        <label class="qlabel">6. Would a fully refundable ₦2,000 deposit make you reserve today?</label>
+        <div class="opts" data-single="deposit_intent">
+          <label class="opt"><input type="radio" name="di" value="yes_now"/> Yes — I'd do it now</label>
+          <label class="opt"><input type="radio" name="di" value="maybe"/> Maybe — need to see more</label>
+          <label class="opt"><input type="radio" name="di" value="no"/> No</label>
+        </div>
+      </div>
+      <div class="q">
+        <label class="qlabel">City</label>
+        <div class="opts cols" data-single="city">
+          <label class="opt"><input type="radio" name="city" value="Lagos"/> Lagos</label>
+          <label class="opt"><input type="radio" name="city" value="Abuja"/> Abuja</label>
+          <label class="opt"><input type="radio" name="city" value="PH"/> Port Harcourt</label>
+          <label class="opt"><input type="radio" name="city" value="Other"/> Other</label>
+        </div>
+      </div>
+      <div class="q">
+        <label class="qlabel">Email <span class="hint">(to send your profile + hold your founding price)</span></label>
+        <input type="email" id="email" placeholder="you@email.com" required />
+      </div>
+      <div class="q">
+        <label class="qlabel">Phone / WhatsApp <span class="hint">(optional)</span></label>
+        <input type="text" id="phone" placeholder="0801 234 5678" />
+      </div>
+      <button type="submit" class="btn btn-solid">Reveal my profile & join the founding list</button>
+      <p class="form-note">We'll only contact you about EVSERA. No spam, ever.</p>
+    </form>
+
+    <div class="thanks" id="thanks">
+      <div class="big">🌿</div>
+      <h3 class="serif">You're on the founding list.</h3>
+      <p>We'll send your atmosphere profile and early access soon.</p>
+      <p style="margin-top:12px;"><a href="#community" style="color:var(--leaf-deep); font-weight:500;">Join the founding community →</a> &nbsp;·&nbsp; <a href="#reserve" style="color:var(--leaf-deep);">Reserve your place →</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section class="reserve" id="community">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" style="color:var(--leaf)">The founding circle</span>
+      <h2 class="serif">Build EVSERA with us.</h2>
+      <p>Founders get early access, founding pricing, and a vote on the first atmospheres — Daybreak, Meridian, Nightfall. Join the community where it all happens.</p>
+    </div>
+    <div class="offer" style="text-align:center;">
+      <a id="communityBtn" href="#profile" class="btn btn-solid" style="width:100%; justify-content:center;">Join the founding community on WhatsApp →</a>
+      <p class="guarantee" id="communityNote">A small, intentional group. Leave any time.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand-f">EVSERA</div>
+    <div class="tag">Atmosphere, intentionally designed.</div>
+    <p style="margin-top:14px;">Lagos · Abuja · Port Harcourt — Nigeria · evserahome.com · © 2026</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var CFG = window.EVSERA_CONFIG;
+  document.getElementById('depAmt').textContent = Number(CFG.DEPOSIT_NAIRA).toLocaleString();
+
+  document.querySelectorAll('.opt input').forEach(function (input) {
+    input.addEventListener('change', function () {
+      if (input.type === 'radio') {
+        document.querySelectorAll('input[name="' + input.name + '"]').forEach(function (r) {
+          r.closest('.opt').classList.toggle('sel', r.checked);
+        });
+      } else { input.closest('.opt').classList.toggle('sel', input.checked); }
+    });
+  });
+
+  function collect() {
+    var spaces = [];
+    document.querySelectorAll('[data-multi="spaces"] input:checked').forEach(function (c) { spaces.push(c.value); });
+    function radio(name) { var el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ""; }
+    return {
+      spaces: spaces.join(", "),
+      desired_outcome: radio('want'),
+      top_pain: radio('pain'),
+      current_spend: radio('cs'),
+      willingness_to_pay: radio('wtp'),
+      deposit_intent: radio('di'),
+      city: radio('city'),
+      email: document.getElementById('email').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      ts: new Date().toISOString(),
+      page: location.href
+    };
+  }
+  function send(payload, label) {
+    payload.event = label;
+    if (!CFG.FORM_ENDPOINT) { console.log("[EVSERA demo] " + label + ":", payload); return Promise.resolve(); }
+    return fetch(CFG.FORM_ENDPOINT, { method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload) }).catch(function (e) { console.warn("Send failed:", e); });
+  }
+
+  document.getElementById('survey').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var data = collect();
+    if (!data.email) return;
+    send(data, "survey_submit");
+    document.getElementById('survey').style.display = 'none';
+    document.getElementById('thanks').classList.add('show');
+    document.getElementById('thanks').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  var demo = !CFG.PAYSTACK_PUBLIC_KEY;
+  if (demo) document.getElementById('demoFlag').classList.add('show');
+
+  document.getElementById('depositBtn').addEventListener('click', function () {
+    var data = collect();
+    var email = data.email || prompt("Enter your email to reserve your place:");
+    if (!email) return;
+    data.email = email;
+    send(data, "deposit_click");
+    if (demo) {
+      alert("DEMO MODE ✓\n\nIn live mode this opens Paystack to take a ₦" +
+        Number(CFG.DEPOSIT_NAIRA).toLocaleString() +
+        " refundable deposit.\n\nAdd your Paystack public key in CONFIG to enable real reservations.");
+      return;
+    }
+    var handler = PaystackPop.setup({
+      key: CFG.PAYSTACK_PUBLIC_KEY, email: email,
+      amount: Number(CFG.DEPOSIT_NAIRA) * 100, currency: "NGN",
+      metadata: { custom_fields: [
+        { display_name: "Spaces", variable_name: "spaces", value: data.spaces || "-" },
+        { display_name: "WTP", variable_name: "wtp", value: data.willingness_to_pay || "-" },
+        { display_name: "City", variable_name: "city", value: data.city || "-" }
+      ] },
+      callback: function (resp) {
+        data.paystack_ref = resp.reference;
+        send(data, "deposit_paid");
+        alert("You're in 🌿 Your founding place is reserved. Reference: " + resp.reference);
+      },
+      onClose: function () {}
+    });
+    handler.openIframe();
+  });
+
+  // ---- Community button ----
+  var commBtn = document.getElementById('communityBtn');
+  if (CFG.WHATSAPP_COMMUNITY_LINK) {
+    commBtn.href = CFG.WHATSAPP_COMMUNITY_LINK;
+    commBtn.target = "_blank"; commBtn.rel = "noopener";
+  } else {
+    commBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      alert("Add your WhatsApp Community invite link in CONFIG (WHATSAPP_COMMUNITY_LINK) to enable this button.");
+    });
+  }
+
+  // ---- B2B lead form ----
+  var b2b = document.getElementById('b2bform');
+  if (b2b) b2b.addEventListener('submit', function (e) {
+    e.preventDefault();
+    function radio(name) { var el = document.querySelector('input[name="' + name + '"]:checked'); return el ? el.value : ""; }
+    var d = {
+      business: document.getElementById('bname').value.trim(),
+      business_type: radio('btype'),
+      contact: document.getElementById('bcontact').value.trim(),
+      ts: new Date().toISOString(), page: location.href
+    };
+    if (!d.business || !d.contact) return;
+    send(d, "b2b_lead");
+    // optional: also open WhatsApp chat if a number is set
+    if (CFG.WHATSAPP_NUMBER) {
+      var msg = encodeURIComponent("Hi EVSERA — I'd like the free month for my business: " + d.business + " (" + d.business_type + ").");
+      window.open("https://wa.me/" + CFG.WHATSAPP_NUMBER + "?text=" + msg, "_blank");
+    }
+    b2b.style.display = 'none';
+    document.getElementById('b2bthanks').classList.add('show');
+    document.getElementById('b2bthanks').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+})();
+</script>
+</body>
+</html>
