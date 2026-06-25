@@ -594,6 +594,7 @@ gtag('config', 'G-KMND5VQ4DL');
   if (demo) document.getElementById('demoFlag').classList.add('show');
 
   document.getElementById('depositBtn').addEventListener('click', function () {
+    gtag('event', 'deposit_interest');
     var data = collect();
     var email = data.email || prompt("Enter your email to reserve your place:");
     if (!email) return;
