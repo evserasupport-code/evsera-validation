@@ -2,14 +2,21 @@
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-ABC123XYZ9"></script>
-
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KMND5VQ4DL"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-
 gtag('config', 'G-KMND5VQ4DL');
+</script>
+
+<!-- Microsoft Clarity -->
+<script type="text/javascript">
+  (function(c,l,a,r,i,t,y){
+      c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+  })(window, document, "clarity", "script", "xcls4p5qfl");
 </script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -213,7 +220,7 @@ gtag('config', 'G-KMND5VQ4DL');
     <h1 class="serif">Atmosphere,<br><em>intentionally designed.</em></h1>
     <p class="lede">A scent you design into your day — one signature that follows you from home to car to office, and becomes your cue for how you want to feel.</p>
     <div class="cta-row">
-      <a href="#profile" class="btn btn-solid">Discover your atmosphere profile</a>
+      <a href="#profile" id="ctaProfileStart" class="btn btn-solid">Discover your atmosphere profile</a>
       <a href="#system" class="btn btn-ghost">See how it works</a>
     </div>
     <p class="hero-meta">Founding members · first 100 · fully refundable deposit</p>
@@ -514,6 +521,28 @@ gtag('config', 'G-KMND5VQ4DL');
   var CFG = window.EVSERA_CONFIG;
   document.getElementById('depAmt').textContent = Number(CFG.DEPOSIT_NAIRA).toLocaleString();
 
+  // ===== ANALYTICS =====
+  // Bulletproof wrapper: never throws, even if gtag is blocked by an ad-blocker.
+  function track(name, params) { try { gtag('event', name, params || {}); } catch (e) {} }
+
+  // Event 1 — profile_started (hero CTA click)
+  var ctaStart = document.getElementById('ctaProfileStart');
+  if (ctaStart) ctaStart.addEventListener('click', function () { track('profile_started'); });
+
+  // survey_started — first real interaction with the survey (fires once) → lets you measure abandonment
+  var surveyStarted = false, surveyEl = document.getElementById('survey');
+  function markSurveyStart() { if (!surveyStarted) { surveyStarted = true; track('survey_started'); } }
+  if (surveyEl) { surveyEl.addEventListener('focusin', markSurveyStart); surveyEl.addEventListener('change', markSurveyStart); }
+
+  // scroll_depth — 25/50/75/90% (each fires once) → measures how far interest goes
+  var sMarks = [25, 50, 75, 90], sHit = {};
+  window.addEventListener('scroll', function () {
+    var st = window.scrollY || document.documentElement.scrollTop;
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = h > 0 ? (st / h) * 100 : 0;
+    sMarks.forEach(function (m) { if (pct >= m && !sHit[m]) { sHit[m] = true; track('scroll_depth', { percent: m }); } });
+  }, { passive: true });
+
   document.querySelectorAll('.opt input').forEach(function (input) {
     input.addEventListener('change', function () {
       if (input.type === 'radio') {
@@ -581,6 +610,7 @@ gtag('config', 'G-KMND5VQ4DL');
     if (!data.email) return;
     var p = computeProfile(data);
     data.profile = p.name;
+    track('profile_completed', { profile: p.name, wtp: data.willingness_to_pay || '-', city: data.city || '-' });
     send(data, "survey_submit");
     document.getElementById('thanksName').textContent = p.name;
     document.getElementById('thanksScent').textContent = p.scent;
@@ -594,7 +624,7 @@ gtag('config', 'G-KMND5VQ4DL');
   if (demo) document.getElementById('demoFlag').classList.add('show');
 
   document.getElementById('depositBtn').addEventListener('click', function () {
-    gtag('event', 'deposit_interest');
+    track('deposit_interest');   // fires on click, before Paystack — measures intent
     var data = collect();
     var email = data.email || prompt("Enter your email to reserve your place:");
     if (!email) return;
@@ -616,6 +646,7 @@ gtag('config', 'G-KMND5VQ4DL');
       ] },
       callback: function (resp) {
         data.paystack_ref = resp.reference;
+        track('deposit_paid', { value: Number(CFG.DEPOSIT_NAIRA), currency: 'NGN' });  // the real conversion
         send(data, "deposit_paid");
         alert("You're in 🌿 Your founding place is reserved. Reference: " + resp.reference);
       },
@@ -629,6 +660,7 @@ gtag('config', 'G-KMND5VQ4DL');
   if (CFG.WHATSAPP_COMMUNITY_LINK) {
     commBtn.href = CFG.WHATSAPP_COMMUNITY_LINK;
     commBtn.target = "_blank"; commBtn.rel = "noopener";
+    commBtn.addEventListener('click', function () { track('whatsapp_join'); });
   } else {
     commBtn.addEventListener('click', function (e) {
       e.preventDefault();
@@ -648,6 +680,7 @@ gtag('config', 'G-KMND5VQ4DL');
       ts: new Date().toISOString(), page: location.href
     };
     if (!d.business || !d.contact) return;
+    track('business_lead', { business_type: d.business_type || '-' });
     send(d, "b2b_lead");
     // optional: also open WhatsApp chat if a number is set
     if (CFG.WHATSAPP_NUMBER) {
