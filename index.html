@@ -33,9 +33,13 @@ gtag('config', 'G-KMND5VQ4DL');
     //    Get it free at https://dashboard.paystack.com/#/settings/developer
     //    Leave "" to run the deposit button in DEMO mode (no real charge).
     PAYSTACK_PUBLIC_KEY: "pk_live_79a3e4dfc70c2ed2a18cb10dac7a8027a7fde31e",
-    // 2. Where survey + lead data is POSTed (e.g. a free Formspree endpoint).
-    //    Leave "" to log submissions to the browser console instead.
-    FORM_ENDPOINT: "https://formspree.io/f/xkolgvnq",
+    // 2. Where survey + lead data is POSTed. Pick a FREE backend:
+    //    • Web3Forms (free 250/mo): set FORM_ENDPOINT to "https://api.web3forms.com/submit"
+    //      and paste your access key into WEB3FORMS_KEY below.
+    //    • Google Apps Script (free, UNLIMITED, lands straight in your Sheet — recommended):
+    //      paste your Web App URL here; the page auto-handles the rest.
+    FORM_ENDPOINT: "https://api.web3forms.com/submit",
+    WEB3FORMS_KEY: "9dcd9870-79a4-42a0-835b-56f52b6c75c6",   // Web3Forms access key
     // 3. The refundable deposit amount, in Naira.
     DEPOSIT_NAIRA: 2000,
     // 4. Your WhatsApp COMMUNITY invite link (chat.whatsapp.com/...).
@@ -376,6 +380,14 @@ gtag('config', 'G-KMND5VQ4DL');
   </div>
 </section>
 
+<!-- MID-PAGE CTA (on-ramp to the profiler for people who scroll instead of clicking the hero) -->
+<section style="padding-top:10px;">
+  <div class="wrap" style="text-align:center;">
+    <a href="#profile" class="btn btn-solid">Discover your atmosphere profile →</a>
+    <p style="margin-top:12px; font-size:13px; color:var(--grey);">90 seconds. No email needed to see your result.</p>
+  </div>
+</section>
+
 <!-- RESERVE / DEPOSIT -->
 <section class="reserve" id="reserve">
   <div class="wrap">
@@ -520,17 +532,23 @@ gtag('config', 'G-KMND5VQ4DL');
       <p id="thanksScent" style="font-weight:600; color:var(--forest);"></p>
       <p id="thanksBlurb" style="max-width:460px; margin:8px auto 14px;"></p>
 
-      <!-- email captured AFTER the reward (reward-first) -->
+      <div style="max-width:460px; margin:0 auto 6px; text-align:left; background:var(--paper-2); border:1px solid var(--line); border-radius:8px; padding:16px 20px; font-size:14.5px; line-height:1.6;">
+        <p style="margin:0 0 8px;"><b style="color:var(--forest);">The notes:</b> <span id="dNotes"></span></p>
+        <p style="margin:0 0 8px;"><b style="color:var(--forest);">Designed to support:</b> <span id="dSupport"></span></p>
+        <p style="margin:0;"><b style="color:var(--forest);">You told us:</b> <span id="dAnswers"></span></p>
+      </div>
+
+      <!-- email captured AFTER the reward (reward-first). Honest: the profile is already shown above. -->
       <form id="foundingForm" style="max-width:420px; margin:18px auto 0; text-align:left;">
         <div class="q">
-          <label class="qlabel">Lock your founding-member price <span class="hint">(first 100 · 30% below launch)</span></label>
+          <label class="qlabel">Join the founding circle <span class="hint">Be first to get your blend when we launch, at the founding-member price (first 100 · 30% below public).</span></label>
           <input type="email" id="email" placeholder="you@email.com" required />
         </div>
         <div class="q">
           <label class="qlabel">Phone / WhatsApp <span class="hint">(optional)</span></label>
           <input type="text" id="phone" placeholder="0801 234 5678" />
         </div>
-        <button type="submit" class="btn btn-solid" style="width:100%; justify-content:center;">Lock my founding price →</button>
+        <button type="submit" class="btn btn-solid" style="width:100%; justify-content:center;">Join the founding list →</button>
         <p class="form-note">We'll only contact you about EVSERA. No spam, ever.</p>
       </form>
 
@@ -624,23 +642,40 @@ gtag('config', 'G-KMND5VQ4DL');
   }
   function send(payload, label) {
     payload.event = label;
-    if (!CFG.FORM_ENDPOINT) { console.log("[EVSERA demo] " + label + ":", payload); return Promise.resolve(); }
-    return fetch(CFG.FORM_ENDPOINT, { method: "POST",
-      headers: { "Content-Type": "application/json", "Accept": "application/json" },
-      body: JSON.stringify(payload) }).catch(function (e) { console.warn("Send failed:", e); });
+    var url = CFG.FORM_ENDPOINT;
+    if (!url) { console.log("[EVSERA demo] " + label + ":", payload); return Promise.resolve(); }
+    if (CFG.WEB3FORMS_KEY) payload.access_key = CFG.WEB3FORMS_KEY;   // Web3Forms needs the key in the body
+    var isAppsScript = url.indexOf("script.google.com") > -1;        // Apps Script needs text/plain (avoids CORS preflight)
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": isAppsScript ? "text/plain;charset=utf-8" : "application/json", "Accept": "application/json" },
+      body: JSON.stringify(payload)
+    }).catch(function (e) { console.warn("Send failed:", e); });
   }
 
   // --- real, answer-driven atmosphere profile (no deception: derived from THEIR answers) ---
   var RESULTS = {
-    commuter: { name: "The Commuter", scent: "You'd start with Daybreak ☀️",
-      blurb: "Your day begins in motion. Bright citrus and rosemary to make your commute feel like a clear, awake beginning." },
-    focus: { name: "The Focus Driver", scent: "You'd start with Meridian 🖥️",
-      blurb: "You run on clarity. Clean, composed cedar and bergamot. Designed to support calm focus at your desk." },
-    reset: { name: "The Reset Seeker", scent: "You'd start with Nightfall 🌙",
-      blurb: "You carry the day home. Warm lavender and vetiver. Designed to help you unwind as the day closes." },
-    curator: { name: "The Curator", scent: "You'd run the full Day Cycle ☀️ 🖥️ 🌙",
-      blurb: "You want every space to feel intentional. One signature: Daybreak, Meridian and Nightfall, across your whole day." }
+    commuter: { name: "The Commuter", scent: "Daybreak ☀️", tag: "Morning · Car",
+      notes: "Sweet orange, bergamot, rosemary, a touch of peppermint",
+      support: "a clear, awake start to your commute",
+      blurb: "Your day begins in motion. Bright and energising, made to wake a space without the caffeine jitter." },
+    focus: { name: "The Focus Driver", scent: "Meridian 🖥️", tag: "Midday · Office",
+      notes: "Bergamot, rosemary, frankincense, cedar",
+      support: "calm, sustained focus at your desk",
+      blurb: "You run on clarity. Clean and composed, quiet enough for a shared room." },
+    reset: { name: "The Reset Seeker", scent: "Nightfall 🌙", tag: "Evening · Home",
+      notes: "Lavender, chamomile, vetiver, warm vanilla",
+      support: "winding down and resting as the day closes",
+      blurb: "You carry the day home. Warm and soft, a signal to your body that the day is over." },
+    curator: { name: "The Curator", scent: "The full Day Cycle ☀️ 🖥️ 🌙", tag: "All day",
+      notes: "All three signatures, woven on one Terra base",
+      support: "one intentional atmosphere across your whole day",
+      blurb: "You want every space to feel considered. One signature that follows you from morning to night." }
   };
+  // readable labels for reflecting their own answers back
+  var WANT_LABEL = { calm: "calm", focus: "focus", impression: "a space that feels elevated", routine: "better routines" };
+  var PAIN_LABEL = { fades: "scent that fades too fast", headache: "scents that are too strong",
+    cheap: "cheap, synthetic smells", heat: "products that fail in the heat", none: "not having found one you love yet" };
   function computeProfile(data) {
     var spaces = (data.spaces || "").split(", ").filter(Boolean);
     var want = data.desired_outcome;
@@ -666,9 +701,17 @@ gtag('config', 'G-KMND5VQ4DL');
     lastData = data;
     track('profile_completed', { profile: p.name, wtp: data.willingness_to_pay || '-', city: data.city || '-' });
     send(data, "survey_submit");       // validation data captured even if they never give email
+    var prettySpaces = data.spaces || "your spaces";
+    var wantTxt = WANT_LABEL[data.desired_outcome] || "an intentional space";
+    var painTxt = PAIN_LABEL[data.top_pain] || "";
     document.getElementById('thanksName').textContent = p.name;
-    document.getElementById('thanksScent').textContent = p.scent;
+    document.getElementById('thanksScent').textContent = "Your scent: " + p.scent + "  ·  " + p.tag;
     document.getElementById('thanksBlurb').textContent = p.blurb;
+    document.getElementById('dNotes').textContent = p.notes;
+    document.getElementById('dSupport').textContent = p.support;
+    document.getElementById('dAnswers').textContent =
+      "You spend your day across " + prettySpaces + ". You want " + wantTxt +
+      (painTxt ? ", and you're tired of " + painTxt + "." : ".");
     document.getElementById('survey').style.display = 'none';
     document.getElementById('thanks').classList.add('show');
     document.getElementById('thanks').scrollIntoView({ behavior: 'smooth', block: 'center' });
