@@ -45,7 +45,8 @@ gtag('config', 'G-KMND5VQ4DL');
     WHATSAPP_NUMBER: "2348138991052"
   };
 </script>
-<script src="https://js.paystack.co/v1/inline.js"></script>
+<!-- Paystack is lazy-loaded on first deposit click, so it doesn't slow the initial page load -->
+<link rel="preconnect" href="https://js.paystack.co">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -201,6 +202,9 @@ gtag('config', 'G-KMND5VQ4DL');
   footer { border-top: 1px solid var(--line); padding: 40px 0 56px; text-align: center; color: var(--grey); font-size: 13px; }
   footer .brand-f { font-family: "Inter"; font-weight: 600; letter-spacing: 0.3em; color: var(--forest); font-size: 15px; }
   footer .tag { font-family: "Cormorant Garamond", serif; font-style: italic; font-size: 18px; color: var(--sage); margin-top: 8px; }
+  /* make the scent cards + flow tiles feel tappable (they were drawing dead clicks) */
+  #system .card, .flow .node { cursor: pointer; transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+  #system .card:hover, .flow .node:hover { border-color: var(--leaf-deep); transform: translateY(-2px); box-shadow: 0 6px 22px -14px rgba(1,50,32,0.5); }
 </style>
 </head>
 <body>
@@ -701,23 +705,34 @@ gtag('config', 'G-KMND5VQ4DL');
         " refundable deposit.\n\nAdd your Paystack public key in CONFIG to enable real reservations.");
       return;
     }
-    var handler = PaystackPop.setup({
-      key: CFG.PAYSTACK_PUBLIC_KEY, email: email,
-      amount: Number(CFG.DEPOSIT_NAIRA) * 100, currency: "NGN",
-      metadata: { custom_fields: [
-        { display_name: "Spaces", variable_name: "spaces", value: data.spaces || "-" },
-        { display_name: "WTP", variable_name: "wtp", value: data.willingness_to_pay || "-" },
-        { display_name: "City", variable_name: "city", value: data.city || "-" }
-      ] },
-      callback: function (resp) {
-        data.paystack_ref = resp.reference;
-        track('deposit_paid', { value: Number(CFG.DEPOSIT_NAIRA), currency: 'NGN' });  // the real conversion
-        send(data, "deposit_paid");
-        alert("You're in 🌿 Your founding place is reserved. Reference: " + resp.reference);
-      },
-      onClose: function () {}
-    });
-    handler.openIframe();
+    function openPaystack() {
+      var handler = PaystackPop.setup({
+        key: CFG.PAYSTACK_PUBLIC_KEY, email: email,
+        amount: Number(CFG.DEPOSIT_NAIRA) * 100, currency: "NGN",
+        metadata: { custom_fields: [
+          { display_name: "Spaces", variable_name: "spaces", value: data.spaces || "-" },
+          { display_name: "WTP", variable_name: "wtp", value: data.willingness_to_pay || "-" },
+          { display_name: "City", variable_name: "city", value: data.city || "-" }
+        ] },
+        callback: function (resp) {
+          data.paystack_ref = resp.reference;
+          track('deposit_paid', { value: Number(CFG.DEPOSIT_NAIRA), currency: 'NGN' });  // the real conversion
+          send(data, "deposit_paid");
+          alert("You're in 🌿 Your founding place is reserved. Reference: " + resp.reference);
+        },
+        onClose: function () {}
+      });
+      handler.openIframe();
+    }
+    // load Paystack only now (first time someone actually reserves) — keeps the page fast
+    if (window.PaystackPop) { openPaystack(); }
+    else {
+      var ps = document.createElement('script');
+      ps.src = "https://js.paystack.co/v1/inline.js";
+      ps.onload = openPaystack;
+      ps.onerror = function () { alert("Couldn't load the payment window. Please check your connection and try again."); };
+      document.head.appendChild(ps);
+    }
   });
 
   // ---- Community button ----
@@ -755,6 +770,22 @@ gtag('config', 'G-KMND5VQ4DL');
     b2b.style.display = 'none';
     document.getElementById('b2bthanks').classList.add('show');
     document.getElementById('b2bthanks').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+
+  // ---- turn the cards/tiles people keep tapping into real CTAs (kills the dead clicks) ----
+  document.querySelectorAll('#system .card').forEach(function (card) {
+    card.addEventListener('click', function () {
+      var h = card.querySelector('h3');
+      track('scent_card_tap', { scent: h ? h.textContent.trim() : '' });
+      var t = document.getElementById('profile');
+      if (t) t.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+  document.querySelectorAll('.flow .node').forEach(function (node) {
+    node.addEventListener('click', function () {
+      var t = document.getElementById('system');
+      if (t) t.scrollIntoView({ behavior: 'smooth' });
+    });
   });
 })();
 </script>
