@@ -40,6 +40,8 @@ gtag('config', 'G-KMND5VQ4DL');
     //      paste your Web App URL here; the page auto-handles the rest.
     FORM_ENDPOINT: "https://api.web3forms.com/submit",
     WEB3FORMS_KEY: "9dcd9870-79a4-42a0-835b-56f52b6c75c6",   // Web3Forms access key
+    // Google Apps Script Web App URL (unlimited free storage → your Google Sheet). Paste after deploying.
+    SHEET_ENDPOINT: "",
     // 3. The refundable deposit amount, in Naira.
     DEPOSIT_NAIRA: 2000,
     // 4. Your WhatsApp COMMUNITY invite link (chat.whatsapp.com/...).
@@ -642,15 +644,27 @@ gtag('config', 'G-KMND5VQ4DL');
   }
   function send(payload, label) {
     payload.event = label;
-    var url = CFG.FORM_ENDPOINT;
-    if (!url) { console.log("[EVSERA demo] " + label + ":", payload); return Promise.resolve(); }
-    if (CFG.WEB3FORMS_KEY) payload.access_key = CFG.WEB3FORMS_KEY;   // Web3Forms needs the key in the body
-    var isAppsScript = url.indexOf("script.google.com") > -1;        // Apps Script needs text/plain (avoids CORS preflight)
-    return fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": isAppsScript ? "text/plain;charset=utf-8" : "application/json", "Accept": "application/json" },
-      body: JSON.stringify(payload)
-    }).catch(function (e) { console.warn("Send failed:", e); });
+    // 1) Web3Forms — gives you the email notification + dashboard record
+    if (CFG.FORM_ENDPOINT) {
+      var p = {}; for (var k in payload) p[k] = payload[k];
+      if (CFG.WEB3FORMS_KEY) p.access_key = CFG.WEB3FORMS_KEY;
+      fetch(CFG.FORM_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(p)
+      }).catch(function (e) { console.warn("Web3Forms send failed:", e); });
+    } else {
+      console.log("[EVSERA demo] " + label + ":", payload);
+    }
+    // 2) Google Sheet via Apps Script — unlimited free storage (fire-and-forget, no-cors)
+    if (CFG.SHEET_ENDPOINT) {
+      fetch(CFG.SHEET_ENDPOINT, {
+        method: "POST", mode: "no-cors",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      }).catch(function (e) { console.warn("Sheet send failed:", e); });
+    }
+    return Promise.resolve();
   }
 
   // --- real, answer-driven atmosphere profile (no deception: derived from THEIR answers) ---
